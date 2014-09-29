@@ -1,9 +1,9 @@
 
 /**
- * Personaje
+ * Base
  *
  * Modela la definición de todos los objetos de tipo
- * <code>Personaje</code>
+ * <code>Base</code>
  *
  * @author Eduardo Zardain Canabal A00813391
  * @author Mildred Gatica Sosa A00813946
@@ -17,7 +17,7 @@ public class Base {
 
     private int iPosX;    //posicion en x.       
     private int iPosY;	//posicion en y.
-    private ImageIcon imaIcono;    //imaIcono.
+    private ImageIcon imaIcono;
 
     /**
      * Metodo <I>Base</I> constructor de la clase <code>Base</code>, En este
@@ -38,13 +38,13 @@ public class Base {
     }
 
     /**
-     * Metodo <I>setPosX</I> de la clase <code>Base</code>, En este metodo se
+     * Metodo <I>setX</I> de la clase <code>Base</code>, En este metodo se
      * construye el objeto.
      *
      * @iPosX tipo de dato <code>Entero</code> es el valor utilizado para
      * manejar la posicion en x.
      */
-    public void setPosX(int iPosX) {
+    public void setX(int iPosX) {
         this.iPosX = iPosX;
     }
 
@@ -55,27 +55,27 @@ public class Base {
      * @paramiPosX tipo de dato <code> Entero </code> es el valor utilizado para
      * manejar la posicion en y.
      */
-    public void setPosY(int iPosY) {
+    public void setY(int iPosY) {
         this.iPosY = iPosY;
     }
 
     /**
-     * Metodo <I>getPosX</I> de la clase <code>Base</code>.
+     * Metodo <I>getX</I> de la clase <code>Base</code>.
      *
      * @return regresa la posicion en x del objeto.
      *
      */
-    public int getPosX() {
+    public int getX() {
         return iPosX;
     }
 
     /**
-     * Metodo <I>getPosY</I> de la clase <code>Base</code>,
+     * Metodo <I>getY</I> de la clase <code>Base</code>,
      *
      * @return regresa el valor de la posicion en y.
      *
      */
-    public int getPosY() {
+    public int getY() {
         return iPosY;
     }
 
@@ -128,7 +128,7 @@ public class Base {
      * @return un objeto de la clase <code>Image</code> que es la imagen del
      * imaIcono.
      */
-    public Image getImagenI() {
+    public Image getImagen() {
         return imaIcono.getImage();
     }
 
@@ -140,7 +140,7 @@ public class Base {
      * del rectangulo
      */
     public Rectangle getPerimetro() {
-        return new Rectangle(getPosX(), getPosY(), getAncho(), getAlto());
+        return new Rectangle(getX(), getY(), getAncho(), getAlto());
     }
 
     /**

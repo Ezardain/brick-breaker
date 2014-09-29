@@ -24,22 +24,33 @@ public final class BrickBreaker extends JFrame implements Runnable,
         /* objetos para manejar el buffer del Applet y este no parpadee */
     private Image    imaImagenApplet;   // Imagen a proyectar en Applet	
     private Graphics graGraficaApplet;  // Objeto grafico de la Imagen
-    private Personaje perNena;
-    private LinkedList lliCorredores;
-    private LinkedList lliCaminadores;
+    
+    private Paleta paPaleta;
+    private Pelota pePelota;
+    private Base basBloque;
+    private LinkedList lliBloques;
+    
     private int iVidas;
     private int iScore;
     private int iDireccion;
+    private int iDirPelota;
+    
+    
+    private int iColumnas;
+    private int iRenglones;
+    private int iBloqX;
+    private int iBloqY;
+    
     private int iVelCorredores;
     private int iCorredorCont;
-    private int iNumCorredores;
-    private int iNumCaminadores;
+    
+    
     private SoundClip sonCorredor;
     private SoundClip sonCaminador;
-    private Personaje perCorredor;
-    private Personaje perCaminador;
+    
     private Image imaGameOver;
     private boolean bPausa;
+    private boolean bActivo;
     
     /**
      *
@@ -59,64 +70,60 @@ public final class BrickBreaker extends JFrame implements Runnable,
      */
     public void init() {
         // hago el applet de un tamaño 500,500
-        setSize(800, 600);
+        setSize(576, 800);
+        setBackground (Color.black);
+        bActivo = true;
         
-        iVidas = (int) (Math.random() * 3 + 4);
+        iVidas = 3;
         
         
-        URL urlImagenNena = this.getClass().getResource("nena.gif");
+        URL urlImPal = this.getClass().getResource("images/block.png");
         
-        // se crea a Nena
-	perNena = new Personaje(0, 0, Toolkit.getDefaultToolkit()
-                .getImage(urlImagenNena));
+        // se crea la Paleta
+	paPaleta = new Paleta(0, 0, Toolkit.getDefaultToolkit()
+                .getImage(urlImPal));
         
-        perNena.setX(getWidth() / 2 - perNena.getAncho() / 2);
-        perNena.setY(getHeight() - perNena.getAlto());
+        paPaleta.setX(getWidth() / 2 - paPaleta.getAncho() / 2);
+        paPaleta.setY(getHeight() - 100);
         
-        perNena.setVelocidad(3);
-        iDireccion = 2;
+        paPaleta.setVel(3);
         
-        iVelCorredores = 3;
-        lliCorredores = new LinkedList();
+        // se crea la Pelota
+        URL urlImPel = this.getClass().getResource("images/ball1.png");
+	pePelota = new Pelota(0, 0, Toolkit.getDefaultToolkit()
+                .getImage(urlImPel));
         
-        iNumCorredores = (int) (Math.random() * 4 + 12); 
-        for (int iI = 1; iI <= iNumCorredores; iI++) {
-            URL urlImagenCorredor = this.getClass()
-                .getResource("alien2Corre.gif");
-
-            // se crea el objeto corredor 
-            perCorredor = new Personaje(0, 0,
-                Toolkit.getDefaultToolkit().getImage(urlImagenCorredor));
-            perCorredor.setX((int) ( Math.random() * -getWidth() ));
-            perCorredor.setY((int) (Math.random() * (getHeight() - 
-                    perCorredor.getAlto())));
-            lliCorredores.add(perCorredor);
+        pePelota.setX(getWidth() / 2 - pePelota.getAncho() / 2);
+        pePelota.setY(paPaleta.getY() - pePelota.getAlto());
+        
+        iDirPelota = 1;
+        
+        lliBloques = new LinkedList();
+        
+        iColumnas = 8;
+        iRenglones = 8;
+        iBloqY = 48;
+        iBloqX = 16;
+        
+        for (int iI = 1; iI <= iRenglones; iI++) {
+            
+            for (int iJ = 1; iJ <= iColumnas; iJ++) {
+                URL urlImBloq = this.getClass()
+                .getResource("images/block.png");
+                
+                basBloque = new Base(0, 0,
+                Toolkit.getDefaultToolkit().getImage(urlImBloq));
+                basBloque.setY(iBloqY);
+                basBloque.setX(iBloqX);
+                iBloqX += basBloque.getAncho();
+                lliBloques.add(basBloque); 
+            }
+            iBloqY += basBloque.getAlto();
+            iBloqX = 16;
         }
-        iCorredorCont = 0;
         
-        lliCaminadores = new LinkedList();
-        
-        iNumCaminadores = (int) (Math.random() * 3 + 10); 
-        for (int iI = 1; iI <= iNumCaminadores; iI++) { 
-            URL urlImagenChango = this.getClass()
-                    .getResource("alien1Camina.gif");
-
-             // se crea el chango
-            perCaminador = new Personaje(0, 0,
-                Toolkit.getDefaultToolkit().getImage(urlImagenChango));
-            // se posiciona suzy en alguna parte al azar del lado derecho
-            perCaminador.setX((int) (Math.random() * (getWidth() - 
-                    perCaminador.getAncho())));
-            perCaminador.setY((int) ( Math.random() * -getHeight() ));
-            perCaminador.setVelocidad((int) (Math.random() * 3 + 3));
-            lliCaminadores.add(perCaminador);
-        }
-        
-        sonCorredor = new SoundClip("bump.wav");
-        sonCaminador = new SoundClip("coin.wav");
-
-        URL urlImagenFin = this.getClass().getResource("game_over.jpeg");
-	imaGameOver = Toolkit.getDefaultToolkit().getImage(urlImagenFin);
+        //sonCorredor = new SoundClip("bump.wav");
+        //sonCaminador = new SoundClip("coin.wav");
         
         addKeyListener(this);
     }
@@ -177,36 +184,31 @@ public final class BrickBreaker extends JFrame implements Runnable,
      * 
      */
     public void actualiza(){
-        switch(iDireccion) {
-            case 1: { //se mueve hacia arriba
-                perNena.arriba();
-                break;    
-            }
-            case 2: { //se mueve hacia abajo
-                perNena.abajo();
-                break;    
-            }
-            case 3: { //se mueve hacia izquierda
-                perNena.izquierda();
-                break;    
-            }
-            case 4: { //se mueve hacia derecha
-                perNena.derecha();
-                break;    	
-            }
+        if (iDireccion == 1) {
+            paPaleta.setX(paPaleta.getX() - paPaleta.getVel());
+        }
+        if (iDireccion == 2) {
+            paPaleta.setX(paPaleta.getX() + paPaleta.getVel());
         }
         
-        for (Object objCorredor : lliCorredores) {
-            Personaje perCorredor = (Personaje) objCorredor;
-            perCorredor.setVelocidad(iVelCorredores);
-            perCorredor.derecha();
-            
+        if (bActivo) {
+            if (iDirPelota == 1) {
+                pePelota.setX(pePelota.getX() + 4);
+                pePelota.setY(pePelota.getY() - 4);
+            }
+            if (iDirPelota == 2) {
+                pePelota.setX(pePelota.getX() - 4);
+                pePelota.setY(pePelota.getY() - 4);
+            }
+            if (iDirPelota == 3) {
+                pePelota.setX(pePelota.getX() - 4);
+                pePelota.setY(pePelota.getY() + 4);
+            }
+            if (iDirPelota == 4) {
+                pePelota.setX(pePelota.getX() + 4);
+                pePelota.setY(pePelota.getY() + 4);
+            }
         }
-        for (Object objCaminador : lliCaminadores) {
-            Personaje perCaminador = (Personaje) objCaminador;
-            perCaminador.setVelocidad((int) (Math.random() * 3 + 3));
-            perCaminador.abajo();
-        } 
         
         if (iCorredorCont >=5) {
             iVidas--;
@@ -225,46 +227,44 @@ public final class BrickBreaker extends JFrame implements Runnable,
     public void checaColision(){
         // instrucciones para checar colision y reacomodar personajes si 
         // es necesario
-        if(perNena.getY() < 0 || 
-                perNena.getY() + perNena.getAlto() > getHeight() ||
-                perNena.getX() < 0 ||
-                perNena.getX() + perNena.getAncho() > getWidth()) {
-            perNena.setVelocidad(0);
+        if (paPaleta.getX() < 0) {
+            paPaleta.setX(0);
+            //bColPaleta = true;
+        }
+        if (paPaleta.getX() + paPaleta.getAncho() > getWidth()) {
+            paPaleta.setX(getWidth() - paPaleta.getAncho());
+            //bColPaleta = true;
         }
         
-        for (Object objCaminador : lliCaminadores) {
-            Personaje perCaminador = (Personaje) objCaminador;
-            //Detecta colisiones en cada elemento de la lista encadenada
-            if (perCaminador.getY() + perCaminador.getAlto() > getHeight()) {
-                perCaminador.setX((int) (Math.random() * (getWidth() - 
-                    perCaminador.getAncho())));
-                perCaminador.setY((int) ( Math.random() * -getHeight() ));
-                sonCaminador.play();
+        
+        if (pePelota.getX() + pePelota.getAncho() > getWidth() && iDirPelota == 1) {
+            iDirPelota = 2;
+        }
+        if (pePelota.getX() + pePelota.getAncho() > getWidth() && iDirPelota == 4) {
+            iDirPelota = 3;
+        }
+        if (pePelota.getX() < 0 && iDirPelota == 2) {
+            iDirPelota = 1;
+        }
+        if (pePelota.getX() < 0 && iDirPelota == 3) {
+            iDirPelota = 4;
+        }
+        if (pePelota.getY() < 0 && iDirPelota == 2) {
+            iDirPelota = 3;
+        }
+        if (pePelota.getY() < 0 && iDirPelota == 1) {
+            iDirPelota = 4;
+        }
+        
+        if (pePelota.intersecta(paPaleta)) {
+            if (iDirPelota == 3) {
+                iDirPelota = 2;
             }
-            if (perNena.colisiona(perCaminador)) {
-                sonCaminador.play();
-                perCaminador.setX((int) (Math.random() * (getWidth() - 
-                    perCaminador.getAncho())));
-                perCaminador.setY((int) ( Math.random() * -getHeight() ));
-                iScore++;
+            if (iDirPelota == 4) {
+                iDirPelota = 1;
             }
         }
-        for (Object objCorredor : lliCorredores) {
-            Personaje perCorredor = (Personaje) objCorredor;
-            //Detecta colisiones en cada elemento de la lista encadenada
-            if (perCorredor.getX() + perCorredor.getAncho() > getWidth()) {
-                perCorredor.setX(0);
-                perCorredor.setY((int) (Math.random() * (getHeight() - 
-                    perCorredor.getAlto())));
-            }
-            if (perNena.colisiona(perCorredor)) {
-                sonCorredor.play();
-                perCorredor.setX((int) ( Math.random() * -getWidth() ));
-                perCorredor.setY((int) (Math.random() * (getHeight() - 
-                    perCorredor.getAlto())));
-                iCorredorCont++;
-            }
-        }
+        
     }
 	
     /**
@@ -284,17 +284,11 @@ public final class BrickBreaker extends JFrame implements Runnable,
                         this.getSize().height);
                 graGraficaApplet = imaImagenApplet.getGraphics ();
         }
-
-        // Actualiza la imagen de fondo.
-        URL urlImagenFondo = this.getClass().getResource("espacio.jpg");
-        Image imaImagenEspacio = Toolkit.getDefaultToolkit()
-                .getImage(urlImagenFondo);
         
-
-        // Despliego la imagen
-        graGraficaApplet.drawImage(imaImagenEspacio, 0, 0, 
-                getWidth(), getHeight(), this);
-      
+        graGraficaApplet.setColor (getBackground ());
+        graGraficaApplet.fillRect (0, 0, this.getSize().width, 
+                this.getSize().height);
+        
         
         // Actualiza el Foreground.
         graGraficaApplet.setColor (getForeground());
@@ -316,30 +310,26 @@ public final class BrickBreaker extends JFrame implements Runnable,
      */
     public void paint1(Graphics g) {
         // si la imagen ya se cargo
-        if (lliCorredores != null & lliCaminadores != null & perNena != null) {              
-                g.setColor(Color.white);
-                for (Object objCorredor : lliCorredores) {
-                    Personaje perCorredor = (Personaje) objCorredor;
-                    //Dibuja la imagen del corredor en la posicion actualizada
-                    g.drawImage(perCorredor.getImagen(), perCorredor.getX(),
-                        perCorredor.getY(), this);
-                }
-                for (Object objCaminador : lliCaminadores) {
-                    Personaje perCaminador = (Personaje) objCaminador;
-                    //Dibuja la imagen del caminador en la posicion actualizada
-                    g.drawImage(perCaminador.getImagen(), perCaminador.getX(),
-                        perCaminador.getY(), this);
-                } 
-                //Dibuja la imagen de Nena en la posicion actualizada
-                g.drawImage(perNena.getImagen(), perNena.getX(),
-                        perNena.getY(), this);
-                g.drawString("Score:", 10, 40);
-                g.drawString(String.valueOf(iScore), 60, 40);
-                g.drawString("Vidas:", 120, 40);
-                g.drawString(String.valueOf(iVidas), 180, 40);
-                if (iVidas < 1) {
-                    g.drawImage(imaGameOver, 0, 0, this);
-                }
+        if (lliBloques != null & paPaleta != null & pePelota != null) {              
+            g.setColor(Color.white);
+            for (Object objBloque : lliBloques) {
+                Base basBloque = (Base) objBloque;
+                //Dibuja la imagen del bloque en la posicion actualizada
+                g.drawImage(basBloque.getImagen(), basBloque.getX(),
+                    basBloque.getY(), this);
+            }
+            //Dibuja la imagen de Nena en la posicion actualizada
+            g.drawImage(paPaleta.getImagen(), paPaleta.getX(),
+                    paPaleta.getY(), this);
+            g.drawImage(pePelota.getImagen(), pePelota.getX(),
+                    pePelota.getY(), this);
+            g.drawString("Score:", 10, 40);
+            g.drawString(String.valueOf(iScore), 60, 40);
+            g.drawString("Vidas:", 120, 40);
+            g.drawString(String.valueOf(iVidas), 180, 40);
+            if (iVidas < 1) {
+                g.drawImage(imaGameOver, 0, 0, this);
+            }
              
         } // sino se ha cargado se dibuja un mensaje 
         else {
@@ -365,8 +355,15 @@ public final class BrickBreaker extends JFrame implements Runnable,
     }
 
     @Override
-    public void keyPressed(KeyEvent e) {
-        //To change body of generated methods, choose Tools | Templates.
+    public void keyPressed(KeyEvent keyEvent) {
+        if (!bPausa) {
+            if (keyEvent.getKeyCode() == KeyEvent.VK_LEFT) {
+                iDireccion = 1;
+            }
+            if (keyEvent.getKeyCode() == KeyEvent.VK_RIGHT) {
+                iDireccion = 2;
+            }
+        }
     }
 
     @Override
