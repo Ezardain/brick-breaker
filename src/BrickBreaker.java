@@ -86,7 +86,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
         paPaleta.setX(getWidth() / 2 - paPaleta.getAncho() / 2);
         paPaleta.setY(getHeight() - 100);
         
-        paPaleta.setVel(3);
+        paPaleta.setVel(6);
         
         // se crea la Pelota
         URL urlImPel = this.getClass().getResource("images/ball1.png");
@@ -97,6 +97,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
         pePelota.setY(paPaleta.getY() - pePelota.getAlto());
         
         iDirPelota = 1;
+        pePelota.setVel(4);
         
         lliBloques = new LinkedList();
         
@@ -193,20 +194,20 @@ public final class BrickBreaker extends JFrame implements Runnable,
         
         if (bActivo) {
             if (iDirPelota == 1) {
-                pePelota.setX(pePelota.getX() + 4);
-                pePelota.setY(pePelota.getY() - 4);
+                pePelota.setX(pePelota.getX() + pePelota.getVel());
+                pePelota.setY(pePelota.getY() - pePelota.getVel());
             }
             if (iDirPelota == 2) {
-                pePelota.setX(pePelota.getX() - 4);
-                pePelota.setY(pePelota.getY() - 4);
+                pePelota.setX(pePelota.getX() - pePelota.getVel());
+                pePelota.setY(pePelota.getY() - pePelota.getVel());
             }
             if (iDirPelota == 3) {
-                pePelota.setX(pePelota.getX() - 4);
-                pePelota.setY(pePelota.getY() + 4);
+                pePelota.setX(pePelota.getX() - pePelota.getVel());
+                pePelota.setY(pePelota.getY() + pePelota.getVel());
             }
             if (iDirPelota == 4) {
-                pePelota.setX(pePelota.getX() + 4);
-                pePelota.setY(pePelota.getY() + 4);
+                pePelota.setX(pePelota.getX() + pePelota.getVel());
+                pePelota.setY(pePelota.getY() + pePelota.getVel());
             }
         }
         
@@ -265,6 +266,37 @@ public final class BrickBreaker extends JFrame implements Runnable,
             }
         }
         
+        
+        for (Object objBloque : lliBloques) {
+            Base basBloque = (Base) objBloque;
+            if (pePelota.intersecta(basBloque) && iDirPelota == 1) {
+                iDirPelota = 4;
+                basBloque.setX(-1000);
+                basBloque.setY(-1000);
+                iScore += 100;
+            }
+
+            if (pePelota.intersecta(basBloque) && iDirPelota == 2) {
+                iDirPelota = 3;
+                basBloque.setX(-1000);
+                basBloque.setY(-1000);
+                iScore += 100;
+            }
+
+            if (pePelota.intersecta(basBloque) && iDirPelota == 3) {
+                iDirPelota = 2;
+                basBloque.setX(-1000);
+                basBloque.setY(-1000);
+                iScore += 100;
+            }
+
+            if (pePelota.intersecta(basBloque) && iDirPelota == 4) {
+                iDirPelota = 1;
+                basBloque.setX(-1000);
+                basBloque.setY(-1000);
+                iScore += 100;
+            }
+        }
     }
 	
     /**

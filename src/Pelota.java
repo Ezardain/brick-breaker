@@ -35,7 +35,7 @@ public class Pelota extends Base {
      * @return regresa la velocidad en x del objeto.
      *
      */
-    public double getVel() {
+    public int getVel() {
         return iVel;
     }
     
