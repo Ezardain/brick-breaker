@@ -49,8 +49,17 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private SoundClip sonCaminador;
     
     private Image imaGameOver;
+    private Image imaTitulo;
+    private Image imaVictoria;
+    
     private boolean bPausa;
     private boolean bActivo;
+    private boolean bInicio;
+    
+    private long tiempoActual;
+    private long tiempoInicial;
+    
+    private Animacion aniPelota;
     
     /**
      *
@@ -59,7 +68,6 @@ public final class BrickBreaker extends JFrame implements Runnable,
         init();
         start();
     }
-    
     
     /** 
      * init
@@ -72,21 +80,21 @@ public final class BrickBreaker extends JFrame implements Runnable,
         // hago el applet de un tamaño 500,500
         setSize(576, 800);
         setBackground (Color.black);
-        bActivo = true;
+        bInicio = false;
+        bActivo = false;
         
         iVidas = 3;
         
-        
-        URL urlImPal = this.getClass().getResource("images/block.png");
+        URL urlImPal = this.getClass().getResource("images/truck.png");
         
         // se crea la Paleta
 	paPaleta = new Paleta(0, 0, Toolkit.getDefaultToolkit()
                 .getImage(urlImPal));
         
         paPaleta.setX(getWidth() / 2 - paPaleta.getAncho() / 2);
-        paPaleta.setY(getHeight() - 100);
+        paPaleta.setY(getHeight() - paPaleta.getAlto() - 50);
         
-        paPaleta.setVel(6);
+        paPaleta.setVel(12);
         
         // se crea la Pelota
         URL urlImPel = this.getClass().getResource("images/ball1.png");
@@ -97,7 +105,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
         pePelota.setY(paPaleta.getY() - pePelota.getAlto());
         
         iDirPelota = 1;
-        pePelota.setVel(4);
+        pePelota.setVel(7);
         
         lliBloques = new LinkedList();
         
@@ -122,6 +130,28 @@ public final class BrickBreaker extends JFrame implements Runnable,
             iBloqY += basBloque.getAlto();
             iBloqX = 16;
         }
+        
+        //Inicializacion de las imagenes del juego
+        URL urlImTitulo = this.getClass()
+                .getResource("images/title_screen.png");
+	imaTitulo = Toolkit.getDefaultToolkit().getImage(urlImTitulo);
+        
+        //Incializacion de animaciones
+        Image imaPel1 = Toolkit.getDefaultToolkit().
+                getImage(this.getClass().getResource("images/ball1.png"));
+        Image imaPel2 = Toolkit.getDefaultToolkit().
+                getImage(this.getClass().getResource("images/ball2.png"));
+        Image imaPel3 = Toolkit.getDefaultToolkit().
+                getImage(this.getClass().getResource("images/ball3.png"));
+        Image imaPel4 = Toolkit.getDefaultToolkit().
+                getImage(this.getClass().getResource("images/ball4.png"));
+        
+        aniPelota = new Animacion();
+	aniPelota.sumaCuadro(imaPel1, 100);
+	aniPelota.sumaCuadro(imaPel2, 100);
+	aniPelota.sumaCuadro(imaPel3, 100);
+	aniPelota.sumaCuadro(imaPel4, 100);
+        
         
         //sonCorredor = new SoundClip("bump.wav");
         //sonCaminador = new SoundClip("coin.wav");
@@ -161,11 +191,14 @@ public final class BrickBreaker extends JFrame implements Runnable,
                se checa si hubo colisiones para desaparecer jugadores o corregir
                movimientos y se vuelve a pintar todo
             */ 
-            if (!bPausa) {
-            actualiza();
-            checaColision();
+            if (bInicio) {
+                
+                if (!bPausa) {
+                actualiza();
+                checaColision();
+                }
+                repaint();
             }
-            repaint();
 
             try	{
                 // El thread se duerme.
@@ -211,11 +244,17 @@ public final class BrickBreaker extends JFrame implements Runnable,
             }
         }
         
-        if (iCorredorCont >=5) {
-            iVidas--;
-            iCorredorCont = 0;
-            iVelCorredores++;
+        if (!bActivo) {
+            pePelota.setX(paPaleta.getX() + paPaleta.getAncho() / 2
+                    - pePelota.getAncho() / 2);
         }
+        
+        long tiempoTranscurrido =
+             System.currentTimeMillis() - tiempoActual;
+            
+         //Guarda el tiempo actual
+       	 tiempoActual += tiempoTranscurrido;
+         aniPelota.actualiza(tiempoTranscurrido);
     }
 	
     /**
@@ -226,8 +265,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
      * 
      */
     public void checaColision(){
-        // instrucciones para checar colision y reacomodar personajes si 
-        // es necesario
+        //Colision de la paleta con las orillas
         if (paPaleta.getX() < 0) {
             paPaleta.setX(0);
             //bColPaleta = true;
@@ -237,11 +275,13 @@ public final class BrickBreaker extends JFrame implements Runnable,
             //bColPaleta = true;
         }
         
-        
-        if (pePelota.getX() + pePelota.getAncho() > getWidth() && iDirPelota == 1) {
+        //Colision de la pelota con las orillas
+        if (pePelota.getX() + pePelota.getAncho() > getWidth() &&
+                iDirPelota == 1) {
             iDirPelota = 2;
         }
-        if (pePelota.getX() + pePelota.getAncho() > getWidth() && iDirPelota == 4) {
+        if (pePelota.getX() + pePelota.getAncho() > getWidth() &&
+                iDirPelota == 4) {
             iDirPelota = 3;
         }
         if (pePelota.getX() < 0 && iDirPelota == 2) {
@@ -257,44 +297,62 @@ public final class BrickBreaker extends JFrame implements Runnable,
             iDirPelota = 4;
         }
         
+        //Interseccion de la pelota con la paleta
         if (pePelota.intersecta(paPaleta)) {
-            if (iDirPelota == 3) {
-                iDirPelota = 2;
-            }
-            if (iDirPelota == 4) {
-                iDirPelota = 1;
+            //Si colisiona con los lados de la paleta debe de perder
+            if (pePelota.getY() + pePelota.getAlto() >
+                    getHeight() - paPaleta.getAlto() + 10) {
+                if (iVidas > 0) {
+                    perderVida();
+                }
+            } else {
+                if (iDirPelota == 3) {
+                    iDirPelota = 2;
+                }
+                if (iDirPelota == 4) {
+                    iDirPelota = 1;
+                }
             }
         }
         
         
+        //Colision de la pelota con los bloques
         for (Object objBloque : lliBloques) {
             Base basBloque = (Base) objBloque;
             if (pePelota.intersecta(basBloque) && iDirPelota == 1) {
                 iDirPelota = 4;
                 basBloque.setX(-1000);
                 basBloque.setY(-1000);
-                iScore += 100;
+                iScore += 50;
             }
 
             if (pePelota.intersecta(basBloque) && iDirPelota == 2) {
                 iDirPelota = 3;
                 basBloque.setX(-1000);
                 basBloque.setY(-1000);
-                iScore += 100;
+                iScore += 50;
             }
 
             if (pePelota.intersecta(basBloque) && iDirPelota == 3) {
                 iDirPelota = 2;
                 basBloque.setX(-1000);
                 basBloque.setY(-1000);
-                iScore += 100;
+                iScore += 50;
             }
 
             if (pePelota.intersecta(basBloque) && iDirPelota == 4) {
                 iDirPelota = 1;
                 basBloque.setX(-1000);
                 basBloque.setY(-1000);
-                iScore += 100;
+                iScore += 50;
+            }
+        }
+        
+        //Colision con el fondo del juego
+        if (pePelota.getY() + pePelota.getAlto() >
+                getHeight() - pePelota.getAlto()) {
+            if (iVidas > 0) {
+                perderVida();
             }
         }
     }
@@ -321,6 +379,17 @@ public final class BrickBreaker extends JFrame implements Runnable,
         graGraficaApplet.fillRect (0, 0, this.getSize().width, 
                 this.getSize().height);
         
+        
+        // Actualiza la imagen de fondo.
+        URL urlImagenFondo = this.getClass()
+                .getResource("images/background1.png");
+        Image imaFondo = Toolkit.getDefaultToolkit()
+                .getImage(urlImagenFondo);
+        
+
+        // Despliego la imagen
+        graGraficaApplet.drawImage(imaFondo, 0, 0, 
+                getWidth(), getHeight(), this);
         
         // Actualiza el Foreground.
         graGraficaApplet.setColor (getForeground());
@@ -353,32 +422,24 @@ public final class BrickBreaker extends JFrame implements Runnable,
             //Dibuja la imagen de Nena en la posicion actualizada
             g.drawImage(paPaleta.getImagen(), paPaleta.getX(),
                     paPaleta.getY(), this);
-            g.drawImage(pePelota.getImagen(), pePelota.getX(),
+            g.drawImage(aniPelota.getImagen(), pePelota.getX(),
                     pePelota.getY(), this);
             g.drawString("Score:", 10, 40);
             g.drawString(String.valueOf(iScore), 60, 40);
             g.drawString("Vidas:", 120, 40);
             g.drawString(String.valueOf(iVidas), 180, 40);
+            if (!bInicio) {
+                g.drawImage(imaTitulo, 0, 0, this);
+            }
+            
             if (iVidas < 1) {
                 g.drawImage(imaGameOver, 0, 0, this);
             }
-             
         } // sino se ha cargado se dibuja un mensaje 
         else {
                 //Da un mensaje mientras se carga el dibujo	
                 g.drawString("No se cargo la imagen..", 20, 20);
         }
-    }
-    
-    /**
-     * toString
-     * 
-     * Obtiene el valor del objeto Juego que trae Score y vidas
-     * 
-     * @returns un String con los datos del objeto
-     */
-    public String toString() {
-        return " Score = " + iScore + " Vidas = " + iVidas;
     }
 
     @Override
@@ -403,5 +464,22 @@ public final class BrickBreaker extends JFrame implements Runnable,
         if (keyEvent.getKeyCode() == KeyEvent.VK_P) {
             bPausa = !bPausa;
         }
+        if (keyEvent.getKeyCode() == KeyEvent.VK_I) {
+           if (!bInicio) {
+               bInicio = true;
+           }
+        }
+        if (keyEvent.getKeyCode() == KeyEvent.VK_SPACE) {
+            if (bInicio && !bActivo) {
+               bActivo = true;
+           }
+        }
+    }
+    
+    public void perderVida() {
+        iVidas--;
+        pePelota.setX(getWidth() / 2 - pePelota.getAncho() / 2);
+        pePelota.setY(paPaleta.getY() - pePelota.getAlto());
+        bActivo = false;
     }
 }
