@@ -39,12 +39,13 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private int iColumnas;
     private int iRenglones;
     private int iTotalBloques;
-    private int iContBloques;
     private int iBloqX;
     private int iBloqY;
     
     private SoundClip sonIntro;
     private SoundClip sonJuego;
+    private SoundClip sonChoque;
+    private SoundClip sonSelect;
     
     private Image imaGameOver;
     private Image imaTitulo;
@@ -52,12 +53,15 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private Image imaBloque1;
     private Image imaBloque2;
     private Image imaBloque3;
+    private Image imaPausa;
+    private Image imaFondo2;
     
     private boolean bPausa;
     private boolean bActivo;
     private boolean bInicio;
-    private boolean bGameOver;
     private boolean bVictoria;
+    private boolean bNivel2;
+    private boolean bSonido;
     
     private long tiempoActual;
     private long tiempoInicial;
@@ -115,7 +119,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
         iTotalBloques = 64;
         iColumnas = 8;
         iRenglones = 8;
-        iBloqY = 48;
+        iBloqY = 64;
         iBloqX = 16;
         
         for (int iI = 1; iI <= iRenglones; iI++) {
@@ -169,6 +173,11 @@ public final class BrickBreaker extends JFrame implements Runnable,
                 .getResource("images/block3.png");
 	imaBloque3 = Toolkit.getDefaultToolkit().getImage(urlImBloque3);
         
+        URL urlImPausa = this.getClass()
+                .getResource("images/pause.png");
+	imaPausa = Toolkit.getDefaultToolkit().getImage(urlImPausa);
+        
+        
         //Incializacion de animaciones
         Image imaPel1 = Toolkit.getDefaultToolkit().
                 getImage(this.getClass().getResource("images/ball1.png"));
@@ -187,7 +196,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
         
         
         sonIntro = new SoundClip("sounds/intro.wav");
-        //sonCaminador = new SoundClip("coin.wav");
+        sonJuego = new SoundClip("sounds/intro.wav");
+        sonChoque = new SoundClip("sounds/bump.wav");
+        sonSelect = new SoundClip("sounds/select.wav");
         
         addKeyListener(this);
     }
@@ -282,8 +293,13 @@ public final class BrickBreaker extends JFrame implements Runnable,
         }
         
         if (iTotalBloques == 0) {
-            bVictoria = true;
             bInicio = false;
+            if (!bNivel2) {
+                bNivel2 = true;
+                loadNivel2();
+            } else {
+                bVictoria = true;
+            }
         }
         
         reposicionaBloques();
@@ -358,19 +374,19 @@ public final class BrickBreaker extends JFrame implements Runnable,
             if (pePelota.intersecta(bloBloque) && iDirPelota == 1) {
                 iDirPelota = 4;
                 bloBloque.decCont();
-                //iScore += 50;
+                sonChoque.play();
             } else if (pePelota.intersecta(bloBloque) && iDirPelota == 2) {
                 iDirPelota = 3;
                 bloBloque.decCont();
-                //iScore += 50;
+                sonChoque.play();
             } else if (pePelota.intersecta(bloBloque) && iDirPelota == 3) {
                 iDirPelota = 2;
                 bloBloque.decCont();
-                //iScore += 50;
+                sonChoque.play();
             } else if (pePelota.intersecta(bloBloque) && iDirPelota == 4) {
                 iDirPelota = 1;
                 bloBloque.decCont();
-                //iScore += 50;
+                sonChoque.play();
             }
             
         }
@@ -413,10 +429,21 @@ public final class BrickBreaker extends JFrame implements Runnable,
         Image imaFondo = Toolkit.getDefaultToolkit()
                 .getImage(urlImagenFondo);
         
-
         // Despliego la imagen
         graGraficaApplet.drawImage(imaFondo, 0, 0, 
                 getWidth(), getHeight(), this);
+        
+        if (bNivel2) {
+            urlImagenFondo = this.getClass()
+                .getResource("images/background2.png");
+            Image imaFondo2 = Toolkit.getDefaultToolkit()
+                .getImage(urlImagenFondo);
+            graGraficaApplet.drawImage(imaFondo2, 0, 0, 
+                getWidth(), getHeight(), this);
+        }
+        
+
+        
         
         // Actualiza el Foreground.
         graGraficaApplet.setColor (getForeground());
@@ -440,8 +467,12 @@ public final class BrickBreaker extends JFrame implements Runnable,
         // si la imagen ya se cargo
         if (lliBloques != null & paPaleta != null & pePelota != null) {              
             if (iVidas > 0 && bInicio) {
-                sonIntro.stop();
+                //sonIntro.stop();
                 g.setColor(Color.white);
+                if (bSonido) {
+                    sonJuego.play();
+                    bSonido = false;
+                }
                 for (Object objBloque : lliBloques) {
                     Bloque bloBloque = (Bloque) objBloque;
                     //Dibuja la imagen del bloque en la posicion actualizada
@@ -467,12 +498,17 @@ public final class BrickBreaker extends JFrame implements Runnable,
                 g.drawString(String.valueOf(iScore), 60, 40);
                 g.drawString("Vidas:", 120, 40);
                 g.drawString(String.valueOf(iVidas), 180, 40);
-                g.drawString(String.valueOf(iTotalBloques), 240, 40);
             } else if (!bInicio && iVidas > 0) {
                 g.drawImage(imaTitulo, 0, 0, this);
-                sonIntro.play();
+                //sonIntro.play();
             } else if (iVidas < 1) {
                 g.drawImage(imaGameOver, 0, 0, this);
+                bSonido = false;
+                sonJuego.stop();
+            }
+            
+            if (bPausa) {
+                g.drawImage(imaPausa, 0, 0, this);
             }
             
             if (bVictoria) {
@@ -510,15 +546,22 @@ public final class BrickBreaker extends JFrame implements Runnable,
         if (keyEvent.getKeyCode() == KeyEvent.VK_I) {
            if (!bInicio) {
                bInicio = true;
+               sonSelect.play();
+               bSonido = true;
            }
            if (iVidas < 1 || bVictoria) {
                reload();
+               sonSelect.play();
+               bSonido = true;
            }
         }
         if (keyEvent.getKeyCode() == KeyEvent.VK_SPACE) {
             if (bInicio && !bActivo) {
                bActivo = true;
            }
+        }
+        if (keyEvent.getKeyCode() == KeyEvent.VK_V) {
+            bVictoria = true;
         }
     }
     
@@ -544,6 +587,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
     }
     
     public void reload() {
+        bNivel2 = false;
         bVictoria = false;
         lliBloques.clear();
         iTotalBloques = 64;
@@ -581,5 +625,44 @@ public final class BrickBreaker extends JFrame implements Runnable,
         iScore = 0;
         bInicio = true;
         bActivo = false;
+    }
+    
+    public void loadNivel2() {
+        bVictoria = false;
+        lliBloques.clear();
+        iTotalBloques = 72;
+        iColumnas = 8;
+        iRenglones = 9;
+        iBloqY = 64;
+        iBloqX = 16;
+        for (int iI = 1; iI <= iRenglones; iI++) {
+            for (int iJ = 1; iJ <= iColumnas; iJ++) {
+                URL urlImBloq = this.getClass()
+                .getResource("images/block.png");
+                bloBloque = new Bloque(0, 0,
+                Toolkit.getDefaultToolkit().getImage(urlImBloq));
+                bloBloque.setY(iBloqY);
+                bloBloque.setX(iBloqX);
+                iBloqX += bloBloque.getAncho();
+                
+                if (iI >= 1 && iI <= 2) {
+                    bloBloque.setCont(3);
+                }
+                if (iI >= 3 && iI <= 5) {
+                    bloBloque.setCont(2);
+                }
+                if (iI >= 6) {
+                    bloBloque.setCont(2);
+                }
+                lliBloques.add(bloBloque);
+            }
+            iBloqY += bloBloque.getAlto();
+            iBloqX = 16;
+        }
+        pePelota.setX(getWidth() / 2 - pePelota.getAncho() / 2);
+        pePelota.setY(paPaleta.getY() - pePelota.getAlto());
+        bInicio = true;
+        bActivo = false;
+        pePelota.setVel(10);
     }
 }
