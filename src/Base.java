@@ -153,8 +153,8 @@ public class Base {
      * si intersecta.
      * @return un booleano que determina si los objetos se intersectan.
      */
-    public boolean intersectaPuntos(int iPosX, int iPosY) {
-        return getPerimetro().contains(iPosX, iPosY);
+    public boolean intersectaPuntos(int iX, int iY) {
+        return getPerimetro().contains(iX, iY);
     }
 
     /**
@@ -165,9 +165,9 @@ public class Base {
      * intersecta.
      * @return un booleano que determina si los objetos se intersectan.
      */
-    public boolean intersecta(Base obj) {
+    public boolean intersecta(Base basObj) {
         // return getPerimRec().intersects(obj.getPerimetro());
-        return getPerimetro().intersects(obj.getPerimetro());
+        return getPerimetro().intersects(basObj.getPerimetro());
     }
 
 }

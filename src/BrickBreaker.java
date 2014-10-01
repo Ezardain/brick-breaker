@@ -27,7 +27,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
     
     private Paleta paPaleta;
     private Pelota pePelota;
-    private Base basBloque;
+    private Bloque bloBloque;
     private LinkedList lliBloques;
     
     private int iVidas;
@@ -38,6 +38,8 @@ public final class BrickBreaker extends JFrame implements Runnable,
     
     private int iColumnas;
     private int iRenglones;
+    private int iTotalBloques;
+    private int iContBloques;
     private int iBloqX;
     private int iBloqY;
     
@@ -51,6 +53,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private Image imaGameOver;
     private Image imaTitulo;
     private Image imaVictoria;
+    private Image imaBloque1;
+    private Image imaBloque2;
+    private Image imaBloque3;
     
     private boolean bPausa;
     private boolean bActivo;
@@ -94,7 +99,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
         paPaleta.setX(getWidth() / 2 - paPaleta.getAncho() / 2);
         paPaleta.setY(getHeight() - paPaleta.getAlto() - 50);
         
-        paPaleta.setVel(12);
+        paPaleta.setVel(8);
         
         // se crea la Pelota
         URL urlImPel = this.getClass().getResource("images/ball1.png");
@@ -105,10 +110,11 @@ public final class BrickBreaker extends JFrame implements Runnable,
         pePelota.setY(paPaleta.getY() - pePelota.getAlto());
         
         iDirPelota = 1;
-        pePelota.setVel(7);
+        pePelota.setVel(10);
         
         lliBloques = new LinkedList();
         
+        iTotalBloques = 64;
         iColumnas = 8;
         iRenglones = 8;
         iBloqY = 48;
@@ -120,14 +126,24 @@ public final class BrickBreaker extends JFrame implements Runnable,
                 URL urlImBloq = this.getClass()
                 .getResource("images/block.png");
                 
-                basBloque = new Base(0, 0,
+                bloBloque = new Bloque(0, 0,
                 Toolkit.getDefaultToolkit().getImage(urlImBloq));
-                basBloque.setY(iBloqY);
-                basBloque.setX(iBloqX);
-                iBloqX += basBloque.getAncho();
-                lliBloques.add(basBloque); 
+                bloBloque.setY(iBloqY);
+                bloBloque.setX(iBloqX);
+                iBloqX += bloBloque.getAncho();
+                
+                if (iI >= 1 && iI <= 2) {
+                    bloBloque.setCont(3);
+                }
+                if (iI >= 3 && iI <= 5) {
+                    bloBloque.setCont(2);
+                }
+                if (iI >= 6) {
+                    bloBloque.setCont(2);
+                }
+                lliBloques.add(bloBloque);
             }
-            iBloqY += basBloque.getAlto();
+            iBloqY += bloBloque.getAlto();
             iBloqX = 16;
         }
         
@@ -135,6 +151,16 @@ public final class BrickBreaker extends JFrame implements Runnable,
         URL urlImTitulo = this.getClass()
                 .getResource("images/title_screen.png");
 	imaTitulo = Toolkit.getDefaultToolkit().getImage(urlImTitulo);
+        
+        URL urlImBloque1 = this.getClass()
+                .getResource("images/block.png");
+	imaBloque1 = Toolkit.getDefaultToolkit().getImage(urlImBloque1);
+        URL urlImBloque2 = this.getClass()
+                .getResource("images/block2.png");
+	imaBloque2 = Toolkit.getDefaultToolkit().getImage(urlImBloque2);
+        URL urlImBloque3 = this.getClass()
+                .getResource("images/block3.png");
+	imaBloque3 = Toolkit.getDefaultToolkit().getImage(urlImBloque3);
         
         //Incializacion de animaciones
         Image imaPel1 = Toolkit.getDefaultToolkit().
@@ -249,6 +275,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
                     - pePelota.getAncho() / 2);
         }
         
+        
+        reposicionaBloques();
+        
         long tiempoTranscurrido =
              System.currentTimeMillis() - tiempoActual;
             
@@ -268,11 +297,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
         //Colision de la paleta con las orillas
         if (paPaleta.getX() < 0) {
             paPaleta.setX(0);
-            //bColPaleta = true;
         }
         if (paPaleta.getX() + paPaleta.getAncho() > getWidth()) {
             paPaleta.setX(getWidth() - paPaleta.getAncho());
-            //bColPaleta = true;
         }
         
         //Colision de la pelota con las orillas
@@ -318,34 +345,25 @@ public final class BrickBreaker extends JFrame implements Runnable,
         
         //Colision de la pelota con los bloques
         for (Object objBloque : lliBloques) {
-            Base basBloque = (Base) objBloque;
-            if (pePelota.intersecta(basBloque) && iDirPelota == 1) {
+            Bloque bloBloque = (Bloque) objBloque;
+            if (pePelota.intersecta(bloBloque) && iDirPelota == 1) {
                 iDirPelota = 4;
-                basBloque.setX(-1000);
-                basBloque.setY(-1000);
-                iScore += 50;
-            }
-
-            if (pePelota.intersecta(basBloque) && iDirPelota == 2) {
+                bloBloque.decCont();
+                //iScore += 50;
+            } else if (pePelota.intersecta(bloBloque) && iDirPelota == 2) {
                 iDirPelota = 3;
-                basBloque.setX(-1000);
-                basBloque.setY(-1000);
-                iScore += 50;
-            }
-
-            if (pePelota.intersecta(basBloque) && iDirPelota == 3) {
+                bloBloque.decCont();
+                //iScore += 50;
+            } else if (pePelota.intersecta(bloBloque) && iDirPelota == 3) {
                 iDirPelota = 2;
-                basBloque.setX(-1000);
-                basBloque.setY(-1000);
-                iScore += 50;
-            }
-
-            if (pePelota.intersecta(basBloque) && iDirPelota == 4) {
+                bloBloque.decCont();
+                //iScore += 50;
+            } else if (pePelota.intersecta(bloBloque) && iDirPelota == 4) {
                 iDirPelota = 1;
-                basBloque.setX(-1000);
-                basBloque.setY(-1000);
-                iScore += 50;
+                bloBloque.decCont();
+                //iScore += 50;
             }
+            
         }
         
         //Colision con el fondo del juego
@@ -414,10 +432,20 @@ public final class BrickBreaker extends JFrame implements Runnable,
         if (lliBloques != null & paPaleta != null & pePelota != null) {              
             g.setColor(Color.white);
             for (Object objBloque : lliBloques) {
-                Base basBloque = (Base) objBloque;
+                Bloque bloBloque = (Bloque) objBloque;
                 //Dibuja la imagen del bloque en la posicion actualizada
-                g.drawImage(basBloque.getImagen(), basBloque.getX(),
-                    basBloque.getY(), this);
+                if (bloBloque.getCont() <= 1) {
+                    g.drawImage(imaBloque1, bloBloque.getX(), 
+                            bloBloque.getY(), this);
+                }
+                if (bloBloque.getCont() == 2) {
+                    g.drawImage(imaBloque2, bloBloque.getX(), 
+                            bloBloque.getY(), this);
+                }
+                if (bloBloque.getCont() == 3) {
+                    g.drawImage(imaBloque3, bloBloque.getX(), 
+                            bloBloque.getY(), this);
+                }
             }
             //Dibuja la imagen de Nena en la posicion actualizada
             g.drawImage(paPaleta.getImagen(), paPaleta.getX(),
@@ -428,6 +456,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
             g.drawString(String.valueOf(iScore), 60, 40);
             g.drawString("Vidas:", 120, 40);
             g.drawString(String.valueOf(iVidas), 180, 40);
+            g.drawString(String.valueOf(iTotalBloques), 240, 40);
             if (!bInicio) {
                 g.drawImage(imaTitulo, 0, 0, this);
             }
@@ -481,5 +510,19 @@ public final class BrickBreaker extends JFrame implements Runnable,
         pePelota.setX(getWidth() / 2 - pePelota.getAncho() / 2);
         pePelota.setY(paPaleta.getY() - pePelota.getAlto());
         bActivo = false;
+    }
+    
+    public void reposicionaBloques() {
+        //Reposicion de bloques al ser destruidos
+        for (Object objBloque : lliBloques) {
+            Bloque bloBloque = (Bloque) objBloque;
+            if (bloBloque.getCont() == 0) {
+                bloBloque.setX(-1000);
+                bloBloque.setY(-1000);
+                iScore += 50;
+                iTotalBloques--;
+                bloBloque.setCont(1);
+            }
+        }
     }
 }
