@@ -47,8 +47,8 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private int iCorredorCont;
     
     
-    private SoundClip sonCorredor;
-    private SoundClip sonCaminador;
+    private SoundClip sonIntro;
+    private SoundClip sonJuego;
     
     private Image imaGameOver;
     private Image imaTitulo;
@@ -60,6 +60,8 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private boolean bPausa;
     private boolean bActivo;
     private boolean bInicio;
+    private boolean bGameOver;
+    private boolean bVictoria;
     
     private long tiempoActual;
     private long tiempoInicial;
@@ -152,6 +154,11 @@ public final class BrickBreaker extends JFrame implements Runnable,
                 .getResource("images/title_screen.png");
 	imaTitulo = Toolkit.getDefaultToolkit().getImage(urlImTitulo);
         
+        URL urlImGaOv = this.getClass()
+                .getResource("images/game_over.png");
+	imaGameOver = Toolkit.getDefaultToolkit().getImage(urlImGaOv);
+        
+        
         URL urlImBloque1 = this.getClass()
                 .getResource("images/block.png");
 	imaBloque1 = Toolkit.getDefaultToolkit().getImage(urlImBloque1);
@@ -179,7 +186,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
 	aniPelota.sumaCuadro(imaPel4, 100);
         
         
-        //sonCorredor = new SoundClip("bump.wav");
+        sonIntro = new SoundClip("sounds/intro.wav");
         //sonCaminador = new SoundClip("coin.wav");
         
         addKeyListener(this);
@@ -218,7 +225,6 @@ public final class BrickBreaker extends JFrame implements Runnable,
                movimientos y se vuelve a pintar todo
             */ 
             if (bInicio) {
-                
                 if (!bPausa) {
                 actualiza();
                 checaColision();
@@ -274,7 +280,6 @@ public final class BrickBreaker extends JFrame implements Runnable,
             pePelota.setX(paPaleta.getX() + paPaleta.getAncho() / 2
                     - pePelota.getAncho() / 2);
         }
-        
         
         reposicionaBloques();
         
@@ -459,6 +464,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
             g.drawString(String.valueOf(iTotalBloques), 240, 40);
             if (!bInicio) {
                 g.drawImage(imaTitulo, 0, 0, this);
+                sonIntro.play();
+            } else {
+                sonIntro.stop();
             }
             
             if (iVidas < 1) {
@@ -496,6 +504,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
         if (keyEvent.getKeyCode() == KeyEvent.VK_I) {
            if (!bInicio) {
                bInicio = true;
+               if (iVidas < 1 || bVictoria) {
+                   reload();
+               }
            }
         }
         if (keyEvent.getKeyCode() == KeyEvent.VK_SPACE) {
@@ -517,12 +528,43 @@ public final class BrickBreaker extends JFrame implements Runnable,
         for (Object objBloque : lliBloques) {
             Bloque bloBloque = (Bloque) objBloque;
             if (bloBloque.getCont() == 0) {
-                bloBloque.setX(-1000);
-                bloBloque.setY(-1000);
+                bloBloque.setX(-500);
+                bloBloque.setY(-500);
                 iScore += 50;
                 iTotalBloques--;
                 bloBloque.setCont(1);
             }
         }
+    }
+    
+    public void reload() {
+        lliBloques.clear();
+        iBloqY = 48;
+        iBloqX = 16;
+        for (int iI = 1; iI <= iRenglones; iI++) {
+            for (int iJ = 1; iJ <= iColumnas; iJ++) {
+                URL urlImBloq = this.getClass()
+                .getResource("images/block.png");
+                bloBloque = new Bloque(0, 0,
+                Toolkit.getDefaultToolkit().getImage(urlImBloq));
+                bloBloque.setY(iBloqY);
+                bloBloque.setX(iBloqX);
+                iBloqX += bloBloque.getAncho();
+                
+                if (iI >= 1 && iI <= 2) {
+                    bloBloque.setCont(3);
+                }
+                if (iI >= 3 && iI <= 5) {
+                    bloBloque.setCont(2);
+                }
+                if (iI >= 6) {
+                    bloBloque.setCont(2);
+                }
+                lliBloques.add(bloBloque);
+            }
+            iBloqY += bloBloque.getAlto();
+            iBloqX = 16;
+        }
+        iVidas = 3;
     }
 }
