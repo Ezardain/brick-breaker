@@ -43,10 +43,6 @@ public final class BrickBreaker extends JFrame implements Runnable,
     private int iBloqX;
     private int iBloqY;
     
-    private int iVelCorredores;
-    private int iCorredorCont;
-    
-    
     private SoundClip sonIntro;
     private SoundClip sonJuego;
     
@@ -112,7 +108,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
         pePelota.setY(paPaleta.getY() - pePelota.getAlto());
         
         iDirPelota = 1;
-        pePelota.setVel(10);
+        pePelota.setVel(8);
         
         lliBloques = new LinkedList();
         
@@ -141,7 +137,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
                     bloBloque.setCont(2);
                 }
                 if (iI >= 6) {
-                    bloBloque.setCont(2);
+                    bloBloque.setCont(1);
                 }
                 lliBloques.add(bloBloque);
             }
@@ -157,6 +153,10 @@ public final class BrickBreaker extends JFrame implements Runnable,
         URL urlImGaOv = this.getClass()
                 .getResource("images/game_over.png");
 	imaGameOver = Toolkit.getDefaultToolkit().getImage(urlImGaOv);
+        
+        URL urlImVic = this.getClass()
+                .getResource("images/success.png");
+	imaVictoria = Toolkit.getDefaultToolkit().getImage(urlImVic);
         
         
         URL urlImBloque1 = this.getClass()
@@ -219,7 +219,7 @@ public final class BrickBreaker extends JFrame implements Runnable,
      */
     public void run () {
         // se realiza el ciclo del juego en este caso nunca termina
-        while (iVidas > 0) {
+        while (true) {
             /* mientras dure el juego, se actualizan posiciones de jugadores
                se checa si hubo colisiones para desaparecer jugadores o corregir
                movimientos y se vuelve a pintar todo
@@ -281,10 +281,14 @@ public final class BrickBreaker extends JFrame implements Runnable,
                     - pePelota.getAncho() / 2);
         }
         
+        if (iTotalBloques == 0) {
+            bVictoria = true;
+            bInicio = false;
+        }
+        
         reposicionaBloques();
         
-        long tiempoTranscurrido =
-             System.currentTimeMillis() - tiempoActual;
+        long tiempoTranscurrido = System.currentTimeMillis() - tiempoActual;
             
          //Guarda el tiempo actual
        	 tiempoActual += tiempoTranscurrido;
@@ -435,42 +439,44 @@ public final class BrickBreaker extends JFrame implements Runnable,
     public void paint1(Graphics g) {
         // si la imagen ya se cargo
         if (lliBloques != null & paPaleta != null & pePelota != null) {              
-            g.setColor(Color.white);
-            for (Object objBloque : lliBloques) {
-                Bloque bloBloque = (Bloque) objBloque;
-                //Dibuja la imagen del bloque en la posicion actualizada
-                if (bloBloque.getCont() <= 1) {
-                    g.drawImage(imaBloque1, bloBloque.getX(), 
-                            bloBloque.getY(), this);
+            if (iVidas > 0 && bInicio) {
+                sonIntro.stop();
+                g.setColor(Color.white);
+                for (Object objBloque : lliBloques) {
+                    Bloque bloBloque = (Bloque) objBloque;
+                    //Dibuja la imagen del bloque en la posicion actualizada
+                    if (bloBloque.getCont() <= 1) {
+                        g.drawImage(imaBloque1, bloBloque.getX(), 
+                                bloBloque.getY(), this);
+                    }
+                    if (bloBloque.getCont() == 2) {
+                        g.drawImage(imaBloque2, bloBloque.getX(), 
+                                bloBloque.getY(), this);
+                    }
+                    if (bloBloque.getCont() == 3) {
+                        g.drawImage(imaBloque3, bloBloque.getX(), 
+                                bloBloque.getY(), this);
+                    }
                 }
-                if (bloBloque.getCont() == 2) {
-                    g.drawImage(imaBloque2, bloBloque.getX(), 
-                            bloBloque.getY(), this);
-                }
-                if (bloBloque.getCont() == 3) {
-                    g.drawImage(imaBloque3, bloBloque.getX(), 
-                            bloBloque.getY(), this);
-                }
-            }
-            //Dibuja la imagen de Nena en la posicion actualizada
-            g.drawImage(paPaleta.getImagen(), paPaleta.getX(),
-                    paPaleta.getY(), this);
-            g.drawImage(aniPelota.getImagen(), pePelota.getX(),
-                    pePelota.getY(), this);
-            g.drawString("Score:", 10, 40);
-            g.drawString(String.valueOf(iScore), 60, 40);
-            g.drawString("Vidas:", 120, 40);
-            g.drawString(String.valueOf(iVidas), 180, 40);
-            g.drawString(String.valueOf(iTotalBloques), 240, 40);
-            if (!bInicio) {
+                //Dibuja la imagen de Nena en la posicion actualizada
+                g.drawImage(paPaleta.getImagen(), paPaleta.getX(),
+                        paPaleta.getY(), this);
+                g.drawImage(aniPelota.getImagen(), pePelota.getX(),
+                        pePelota.getY(), this);
+                g.drawString("Score:", 10, 40);
+                g.drawString(String.valueOf(iScore), 60, 40);
+                g.drawString("Vidas:", 120, 40);
+                g.drawString(String.valueOf(iVidas), 180, 40);
+                g.drawString(String.valueOf(iTotalBloques), 240, 40);
+            } else if (!bInicio && iVidas > 0) {
                 g.drawImage(imaTitulo, 0, 0, this);
                 sonIntro.play();
-            } else {
-                sonIntro.stop();
+            } else if (iVidas < 1) {
+                g.drawImage(imaGameOver, 0, 0, this);
             }
             
-            if (iVidas < 1) {
-                g.drawImage(imaGameOver, 0, 0, this);
+            if (bVictoria) {
+                g.drawImage(imaVictoria, 0, 0, this);
             }
         } // sino se ha cargado se dibuja un mensaje 
         else {
@@ -504,9 +510,9 @@ public final class BrickBreaker extends JFrame implements Runnable,
         if (keyEvent.getKeyCode() == KeyEvent.VK_I) {
            if (!bInicio) {
                bInicio = true;
-               if (iVidas < 1 || bVictoria) {
-                   reload();
-               }
+           }
+           if (iVidas < 1 || bVictoria) {
+               reload();
            }
         }
         if (keyEvent.getKeyCode() == KeyEvent.VK_SPACE) {
@@ -538,7 +544,11 @@ public final class BrickBreaker extends JFrame implements Runnable,
     }
     
     public void reload() {
+        bVictoria = false;
         lliBloques.clear();
+        iTotalBloques = 64;
+        iColumnas = 8;
+        iRenglones = 8;
         iBloqY = 48;
         iBloqX = 16;
         for (int iI = 1; iI <= iRenglones; iI++) {
@@ -558,13 +568,18 @@ public final class BrickBreaker extends JFrame implements Runnable,
                     bloBloque.setCont(2);
                 }
                 if (iI >= 6) {
-                    bloBloque.setCont(2);
+                    bloBloque.setCont(1);
                 }
                 lliBloques.add(bloBloque);
             }
             iBloqY += bloBloque.getAlto();
             iBloqX = 16;
         }
+        pePelota.setX(getWidth() / 2 - pePelota.getAncho() / 2);
+        pePelota.setY(paPaleta.getY() - pePelota.getAlto());
         iVidas = 3;
+        iScore = 0;
+        bInicio = true;
+        bActivo = false;
     }
 }
